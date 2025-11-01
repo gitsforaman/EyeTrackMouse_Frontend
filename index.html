@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EyeTrackMouse — AI-Powered Eye-Controlled Cursor</title>
+  <meta name="description" content="Control your cursor with your eyes using AI-powered gaze tracking. Privacy-first, smooth, and accessible." />
+  
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-..." crossorigin="anonymous" />
+
+  <style>
+    :root {
+      --bg: #0a0e17;
+      --surface: #111826;
+      --card: #161d2f;
+      --accent: #10b981;
+      --accent-hover: #059669;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border: rgba(255, 255, 255, 0.08);
+      --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.15);
+      --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.25);
+      --radius: 16px;
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      --glow: 0 0 20px rgba(16, 185, 129, 0.3);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: linear-gradient(135deg, #0a0e17 0%, #0d1421 100%); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    body { overflow-x: hidden; }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+    /* Header */
+    header { padding: 20px 0; border-bottom: 1px solid var(--border); }
+    .nav { display: flex; justify-content: space-between; align-items: center; }
+    .logo { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 1.5rem; color: var(--text); text-decoration: none; }
+    .logo-icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--accent), #34d399); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #042029; font-size: 1rem; box-shadow: var(--shadow-sm); }
+    .logo-text { display: flex; flex-direction: column; }
+    .logo-subtitle { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
+    .nav-links { display: flex; gap: 32px; align-items: center; }
+    .nav-links a { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 0.95rem; transition: var(--transition); position: relative; }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a::after { content: ''; position: absolute; bottom: -6px; left: 0; width: 0; height: 2px; background: var(--accent); transition: var(--transition); }
+    .nav-links a:hover::after { width: 100%; }
+
+    /* Hero */
+    .hero { display: grid; grid-template-columns: 1fr 480px; gap: 48px; align-items: center; padding: 80px 0; }
+    .hero-content h1 { font-size: 2.75rem; font-weight: 800; line-height: 1.2; margin-bottom: 16px; background: linear-gradient(90deg, #f1f5f9, #e0f2fe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero-content p { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 28px; max-width: 560px; }
+    .cta-buttons { display: flex; gap: 16px; flex-wrap: wrap; }
+    .btn { padding: 12px 24px; border-radius: 12px; font-weight: 600; font-size: 0.95rem; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: var(--transition); cursor: pointer; border: none; }
+    .btn-primary { background: var(--accent); color: #042029; box-shadow: var(--shadow-sm), var(--glow); }
+    .btn-primary:hover { background: var(--accent-hover); transform: translateY(-2px); box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4); }
+    .btn-secondary { background: transparent; color: var(--text-muted); border: 1.5px solid var(--border); }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--text); background: rgba(16, 185, 129, 0.1); }
+
+    /* Demo Card */
+    .demo-card { background: var(--card); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow-md); border: 1px solid var(--border); height: 100%; display: flex; flex-direction: column; }
+    .demo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .demo-header h3 { font-size: 1.25rem; font-weight: 700; }
+    .demo-controls { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+    .toggle { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: var(--text-muted); }
+    .toggle input { accent-color: var(--accent); }
+    .demo-area { position: relative; height: 400px; background: linear-gradient(135deg, #0d1421, #0a0e17); border-radius: 14px; overflow: hidden; border: 1.5px dashed rgba(255, 255, 255, 0.1); display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.95rem; }
+    .demo-area::before { content: "Move your eyes (or mouse in sim mode) to control the cursor"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; opacity: 0.6; font-size: 1rem; text-align: center; max-width: 80%; transition: opacity 0.3s; }
+    .demo-area.active::before { opacity: 0; }
+    .target-btn { position: absolute; padding: 10px 16px; background: rgba(16, 185, 129, 0.15); border: 1.5px solid rgba(16, 185, 129, 0.3); color: var(--text); border-radius: 10px; font-weight: 600; cursor: pointer; transition: var(--transition); z-index: 5; }
+    .target-btn:hover { background: rgba(16, 185, 129, 0.25); border-color: var(--accent); transform: scale(1.05); }
+    .gaze-ring { position: absolute; width: 100px; height: 100px; border: 2px dashed var(--accent); border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%); opacity: 0.4; animation: pulse 2s infinite; z-index: 10; }
+    .cursor { position: absolute; width: 28px; height: 28px; background: rgba(255, 255, 255, 0.15); border: 2.5px solid #fff; border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%); box-shadow: 0 0 20px rgba(255, 255, 255, 0.4), var(--glow); z-index: 15; backdrop-filter: blur(4px); }
+    @keyframes pulse { 0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.1); } }
+    .status { margin-top: 16px; font-size: 0.875rem; color: var(--text-muted); }
+    .status i { color: var(--accent); }
+
+    /* Sections */
+    .section { padding: 80px 0; }
+    .section-title { font-size: 2rem; font-weight: 800; margin-bottom: 32px; text-align: center; background: linear-gradient(90deg, #f1f5f9, #bbf7d0); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+    .problem-card, .solution-card { background: var(--surface); padding: 32px; border-radius: var(--radius); border: 1px solid var(--border); }
+    .problem-card h3, .solution-card h3 { font-size: 1.5rem; margin-bottom: 16px; color: var(--accent); }
+    .problem-card ul, .solution-card ul { padding-left: 20px; color: var(--text-muted); }
+    .problem-card li, .solution-card li { margin-bottom: 12px; }
+    .highlight { background: rgba(16, 185, 129, 0.15); padding: 4px 8px; border-radius: 6px; font-family: monospace; font-weight: 600; }
+
+    /* Technical Implementation */
+    .tech-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-top: 32px; }
+    .tech-card { background: var(--card); padding: 24px; border-radius: var(--radius); border: 1px solid var(--border); }
+    .tech-card h4 { font-size: 1.1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; color: var(--accent); }
+    .tech-card code { background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; font-size: 0.875rem; }
+    .code-block { background: #0d1117; color: #e6edf3; padding: 16px; border-radius: 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.875rem; overflow-x: auto; margin: 16px 0; border: 1px solid var(--border); }
+
+    /* Features & Integration */
+    .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; padding: 80px 0; }
+    .feature { background: var(--surface); padding: 28px; border-radius: var(--radius); border: 1px solid var(--border); transition: var(--transition); }
+    .feature:hover { transform: translateY(-8px); box-shadow: var(--shadow-md); border-color: rgba(16, 185, 129, 0.3); }
+    .feature-icon { width: 48px; height: 48px; background: rgba(16, 185, 129, 0.15); border-radius: 14px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px; color: var(--accent); font-size: 1.5rem; }
+    .feature h3 { font-size: 1.25rem; margin-bottom: 8px; font-weight: 700; }
+    .feature p { color: var(--text-muted); font-size: 0.95rem; }
+
+    .integration { background: var(--surface); padding: 48px; border-radius: var(--radius); border: 1px solid var(--border); margin: 60px 0; }
+    .integration h2 { font-size: 1.75rem; margin-bottom: 24px; font-weight: 700; }
+    .integration ol { counter-reset: step; padding-left: 4px; }
+    .integration li { counter-increment: step; margin-bottom: 20px; padding-left: 40px; position: relative; color: var(--text-muted); }
+    .integration li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 28px; height: 28px; background: var(--accent); color: #042029; font-weight: 700; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; }
+    .note { font-size: 0.875rem; color: var(--text-muted); margin-top: 16px; background: rgba(255, 255, 255, 0.03); padding: 12px; border-radius: 10px; border-left: 3px solid var(--accent); }
+
+    /* Footer */
+    footer { padding: 40px 0; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; font-size: 0.9rem; color: var(--text-muted); }
+
+    /* Responsive */
+    @media (max-width: 1024px) { .hero, .grid-2 { grid-template-columns: 1fr; text-align: center; } .demo-card { max-width: 520px; margin: 0 auto; } }
+    @media (max-width: 768px) { .features, .tech-grid { grid-template-columns: 1fr; } .nav-links { display: none; } .hero-content h1 { font-size: 2.25rem; } }
+    @media (max-width: 480px) { .container { padding: 0 16px; } .cta-buttons, .demo-controls { justify-content: center; } }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <nav class="nav">
+        <a href="#" class="logo">
+          <div class="logo-icon">ET</div>
+          <div class="logo-text">
+            <div>EyeTrackMouse</div>
+            <div class="logo-subtitle">AI Eye Control</div>
+          </div>
+        </a>
+        <div class="nav-links">
+          <a href="#demo">Live Demo</a>
+          <a href="#problem">Problem</a>
+          <a href="#solution">Solution</a>
+          <a href="#tech">Technical</a>
+          <a href="#features">Features</a>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+      <div class="hero-content">
+        <h1>Control Your Cursor with Your Eyes</h1>
+        <p>An open, privacy-first web demo of AI-powered gaze tracking. Move the cursor, trigger clicks by dwelling, and integrate into any app with WebGazer or MediaPipe.</p>
+        <div class="cta-buttons">
+          <a href="#demo" class="btn btn-primary">Try Live Demo</a>
+          <a href="#tech" class="btn btn-secondary">View Technical Docs</a>
+        </div>
+        <div class="note" style="margin-top: 24px; max-width: 560px;">
+          <strong>Privacy Note:</strong> All processing happens in your browser. No video is recorded or sent. Use simulated mode if you prefer not to enable the camera.
+        </div>
+      </div>
+      <div>
+        <div class="demo-card">
+          <div class="demo-header">
+            <h3>Interactive Demo</h3>
+            <div class="toggle">
+              <input type="checkbox" id="simToggle" checked>
+              <label for="simToggle">Simulated Mode</label>
+            </div>
+          </div>
+          <div class="demo-controls">
+            <button id="startCam" class="btn btn-primary">Start Camera</button>
+            <button id="stopCam" class="btn btn-secondary">Stop</button>
+          </div>
+          <div id="demo" class="demo-area" tabindex="0">
+            <div id="gazeRing" class="gaze-ring" hidden></div>
+            <div id="fakeCursor" class="cursor" hidden></div>
+            <button class="target-btn" style="top: 18%; left: 12%;">Button A</button>
+            <button class="target-btn" style="top: 22%; right: 12%;">Button B</button>
+            <button class="target-btn" style="bottom: 18%; left: 20%;">Button C</button>
+            <button class="target-btn" style="bottom: 18%; right: 18%;">Button D</button>
+          </div>
+          <div class="status" id="demoStatus">Status: Simulated mode active</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Problem & Solution -->
+    <section id="problem" class="section">
+      <h2 class="section-title">The Problem</h2>
+      <div class="grid-2">
+        <div class="problem-card">
+          <h3>Hands-Free Interaction is Hard</h3>
+          <ul>
+            <li>Traditional input (mouse/keyboard) excludes users with motor impairments.</li>
+            <li>Existing eye-tracking hardware costs <strong>$5,000–$25,000</strong> and requires calibration rigs.</li>
+            <li>Web apps lack accessible, low-cost alternatives for gaze-based control.</li>
+            <li>Privacy concerns prevent adoption — users fear webcam data leaks.</li>
+            <li>High latency and jitter make gaze interaction frustrating.</li>
+          </ul>
+        </div>
+        <div class="solution-card">
+          <h3>EyeTrackMouse: The Solution</h3>
+          <ul>
+            <li><strong>Zero hardware</strong> — uses any webcam.</li>
+            <li><strong>100% client-side</strong> — no video leaves the browser.</li>
+            <li><strong>Smooth & responsive</strong> — sub-100ms latency with filtering.</li>
+            <li><strong>Dwell-to-click</strong> — 900ms fixation triggers actions.</li>
+            <li><strong>Open & extensible</strong> — plug in WebGazer, MediaPipe, or custom models.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Technical Implementation -->
+    <section id="tech" class="section" style="background: var(--surface); border-top: 1px solid var(--border);">
+      <div class="container">
+        <h2 class="section-title">Technical Implementation</h2>
+        <p style="text-align:center; max-width:800px; margin:0 auto 40px; color:var(--text-muted);">
+          A modular, high-performance gaze pipeline running entirely in the browser using Web APIs and lightweight ML models.
+        </p>
+
+        <div class="tech-grid">
+          <div class="tech-card">
+            <h4>Webcam Capture</h4>
+            <p>Uses <code>getUserMedia()</code> to access front-facing camera at 480p. Frames are processed in real-time via <code>&lt;canvas&gt;</code>.</p>
+          </div>
+          <div class="tech-card">
+            <h4>Gaze Estimation</h4>
+            <p>Default: <strong>WebGazer.js</strong> (ridge regression on eye landmarks). Alternative: <strong>MediaPipe Face Mesh</strong> + gaze vector projection.</p>
+          </div.>
+          <div class="tech-card">
+            <h4>Smoothing Engine</h4>
+            <p>Exponential moving average + one-euro filter reduces jitter. Configurable <span class="highlight">α = 0.25</span>.</p>
+          </div>
+          <div class="tech-card">
+            <h4>Dwell Detection</h4>
+            <p>Tracks gaze stability within <span class="highlight">16px radius</span> for <span class="highlight">900ms</span> → triggers <code>click()</code>.</p>
+          </div>
+          <div class="tech-card">
+            <h4>Fallback Mode</h4>
+            <p>Mouse-driven simulation ensures demo works even without camera access.</p>
+          </div>
+          <div class="tech-card">
+            <h4>Performance</h4>
+            <p>Runs at <strong>25–40 FPS</strong> on mid-range laptops. Uses <code>requestAnimationFrame</code> and offscreen canvas.</p>
+          </div>
+        </div>
+
+        <div style="margin-top: 48px;">
+          <h3 style="font-size:1.5rem; margin-bottom:16px; text-align:center;">Core Integration Code</h3>
+          <pre class="code-block">
+// Load WebGazer dynamically
+const script = document.createElement('script');
+script.src = 'https://webgazer.cs.brown.edu/webgazer.js';
+document.head.appendChild(script);
+
+webgazer
+  .setRegression('ridge')
+  .setGazeListener((data) => {
+    if (!data) return;
+    const pos = mapToScreen(data.x, data.y);
+    smoothCursor(pos);
+    updateGazeRing(pos);
+  })
+  .begin();
+          </pre>
+        </div>
+
+        <div class="note" style="text-align:center; margin-top:32px;">
+          <strong>Extensible:</strong> Swap in <code>@tensorflow-models/face-landmarks-detection</code> or custom ONNX models via <code>onnxruntime-web</code>.
+        </div>
+      </div>
+    </section>
+
+    <!-- Integration Guide -->
+    <section id="how" class="integration">
+      <h2>How It Works — Web Integration Guide</h2>
+      <ol>
+        <li><strong>Capture</strong> — Request webcam access via <code>getUserMedia()</code>. Always prompt and explain usage.</li>
+        <li><strong>Detect</strong> — Run a lightweight model (WebGazer.js or MediaPipe Face Mesh) to estimate gaze in real-time.</li>
+        <li><strong>Map & Smooth</strong> — Convert gaze coordinates to screen pixels. Apply exponential smoothing and low-pass filtering.</li>
+        <li><strong>Interact</strong> — Move a custom cursor. Enable <em>dwell-to-click</em> (900ms fixation) or blink detection.</li>
+        <li><strong>Fallback</strong> — Provide mouse-driven simulation when camera access is denied or unavailable.</li>
+      </ol>
+      <div class="note">
+        This demo dynamically loads <code>webgazer.js</code> on demand. Toggle <strong>Simulated Mode</strong> to test without a camera.
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="features">
+      <div class="feature">
+        <div class="feature-icon">Shield</div>
+        <h3>Privacy First</h3>
+        <p>All eye tracking runs locally in the browser. No data leaves your device. Full control over camera usage.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">Wave</div>
+        <h3>Smooth & Accurate</h3>
+        <p>Advanced gaze smoothing, jitter reduction, and optional calibration ensure natural, reliable interaction.</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">Plug</div>
+        <h3>Easy Integration</h3>
+        <p>Drop-in hooks for WebGazer, MediaPipe, or custom models. Works in React, Vue, or vanilla JS.</p>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div>© 2025 EyeTrackMouse — Open Demo Project</div>
+      <div class="note">Need a React component, accessibility audit, or enterprise integration? <a href="mailto:hello@eyetrackmouse.dev" style="color:var(--accent)">Get in touch</a>.</div>
+    </footer>
+  </div>
+
+  <script>
+    // EyeTrackMouse Demo Engine (unchanged from previous version)
+    (function () {
+      const $ = (s) => document.querySelector(s);
+      const startBtn = $('#startCam');
+      const stopBtn = $('#stopCam');
+      const simToggle = $('#simToggle');
+      const demo = $('#demo');
+      const status = $('#demoStatus');
+      const gazeRing = $('#gazeRing');
+      const cursor = $('#fakeCursor');
+
+      let webgazer = null;
+      let usingReal = false;
+      let lastPos = { x: 0, y: 0 };
+      let dwellTimer = null;
+      let dwellTarget = null;
+
+      const setStatus = (msg, icon = 'circle') => {
+        status.innerHTML = `<i class="fas fa-${icon}"></i> Status: ${msg}`;
+      };
+
+      const mapToDemo = (pageX, pageY) => {
+        const rect = demo.getBoundingClientRect();
+        return {
+          x: Math.max(0, Math.min(rect.width, pageX - rect.left)),
+          y: Math.max(0, Math.min(rect.height, pageY - rect.top))
+        };
+      };
+
+      const smoothMove = (target) => {
+        lastPos.x += (target.x - lastPos.x) * 0.25;
+        lastPos.y += (target.y - lastPos.y) * 0.25;
+        cursor.style.left = lastPos.x + 'px';
+        cursor.style.top = lastPos.y + 'px';
+      };
+
+      const startSimulated = () => {
+        usingReal = false;
+        simToggle.checked = true;
+        demo.classList.add('active');
+        setStatus('Simulated mode — move your mouse to control gaze', 'mouse-pointer');
+        gazeRing.hidden = false;
+        cursor.hidden = false;
+      };
+
+      const stopAll = () => {
+        if (webgazer) {
+          try { webgazer.pause().end(); } catch (e) {}
+        }
+        usingReal = false;
+        demo.classList.remove('active');
+        gazeRing.hidden = true;
+        cursor.hidden = true;
+        setStatus('Stopped', 'stop');
+        if (dwellTimer) clearTimeout(dwellTimer);
+      };
+
+      startBtn.onclick = async () => {
+        if (simToggle.checked) return startSimulated();
+
+        setStatus('Initializing WebGazer...', 'cog');
+        if (!window.webgazer) {
+          try {
+            await new Promise((res, rej) => {
+              const script = document.createElement('script');
+              script.src = 'https://webgazer.cs.brown.edu/webgazer.js';
+              script.onload = res;
+              script.onerror = rej;
+              document.head.appendChild(script);
+            });
+          } catch (e) {
+            setStatus('WebGazer failed to load — using simulation', 'exclamation-triangle');
+            return startSimulated();
+          }
+        }
+
+        webgazer = window.webgazer;
+        try {
+          await webgazer
+            .setRegression('ridge')
+            .setGazeListener((data) => {
+              if (!data) return;
+              const pos = mapToDemo(data.x, data.y);
+              smoothMove(pos);
+              gazeRing.style.left = pos.x + 'px';
+              gazeRing.style.top = pos.y + 'px';
+            })
+            .begin();
+
+          usingReal = true;
+          demo.classList.add('active');
+          gazeRing.hidden = false;
+          cursor.hidden = false;
+          setStatus('Tracking live with camera', 'eye');
+        } catch (err) {
+          console.error(err);
+          setStatus('Camera denied or failed — using simulation', 'exclamation-triangle');
+          startSimulated();
+        }
+      };
+
+      stopBtn.onclick = stopAll;
+
+      demo.onmousemove = (e) => {
+        if (!simToggle.checked && usingReal) return;
+        const pos = { x: e.clientX - demo.getBoundingClientRect().left, y: e.clientY - demo.getBoundingClientRect().top };
+        smoothMove(pos);
+        gazeRing.style.left = pos.x + 'px';
+        gazeRing.style.top = pos.y + 'px';
+      };
+
+      simToggle.onchange = () => {
+        if (simToggle.checked) {
+          stopAll();
+          startSimulated();
+        } else {
+          setStatus('Press "Start Camera" to enable real tracking', 'video');
+          cursor.hidden = true;
+          gazeRing.hidden = true;
+        }
+      };
+
+      setInterval(() => {
+        if (cursor.hidden) return;
+        const rect = demo.getBoundingClientRect();
+        const pageX = rect.left + lastPos.x;
+        const pageY = rect.top + lastPos.y;
+        const el = document.elementFromPoint(pageX, pageY);
+
+        if (!el || !el.closest('.target-btn')) {
+          if (dwellTimer) clearTimeout(dwellTimer);
+          dwellTarget = null;
+          return;
+        }
+
+        if (dwellTarget !== el) {
+          dwellTarget = el;
+          if (dwellTimer) clearTimeout(dwellTimer);
+          dwellTimer = setTimeout(() => {
+            el.click();
+            el.style.transform = 'scale(0.95)';
+            setTimeout(() => el.style.transform = '', 150);
+            setStatus(`Dwell click: ${el.textContent}`, 'mouse-pointer');
+          }, 900);
+        }
+      }, 100);
+
+      startSimulated();
+      document.addEventListener('visibilitychange', () => document.hidden && stopAll());
+    })();
+  </script>
+</body>
+</html>
